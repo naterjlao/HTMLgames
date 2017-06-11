@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Gravity Ball</title>
+	<style>
+		canvas {
+			border:1px solid #d3d3d3;
+			background-color: #f1f1f1;
+
+			/*Below is the code for centering the canvas (stage)*/
+			padding-left: 0;
+			padding-right: 0;
+			margin-left: auto;
+			margin-right: auto;
+			display: block;
+		}
+	</style>
+</head>
+
+<! On loading the document, call the function startGame() >
+<body onload="startGame()">
+
+	<center>
+		<h1>Gravity Ball</h1>
+		This is a simulation of a bouncing ball under perfect conditions where there exist a gravitational downward acceleration.
+		<br>Author: Nate Lao
+		<h3 id = "velocity"></h3>
+	</center>
+
+
+	<! Code for the game >
+	<script type="text/javascript">
+
+		/* Game variables */
+		var gravity = 0.25; 		/* Gravity */
+		var ceil = 300;				/* Where the ball touches the ceiling */		
+		var floor = 0;				/* Where the ball touches the floor */
+		var frameRate = 10;			/* FPS */
+		var ball = {				/* Ball object defintion */
+			height : ceil,			/* Initial height of the ball */
+			velocity : 0 			/* Intial velocity of the ball */
+		}
+
+	/* Starts the game: creates the necessary components and
+	calls the start() function in the game area object */
+	function startGame() {
+		gameArea.start();	/* Starts the initial code for the game area */
+	}
+
+	/*Defines the stage of the game*/
+	var gameArea = {
+		stage : document.createElement("canvas"),
+
+		/* Starts the game by initializing values */
+		start : function() {
+			this.stage.width = 400;														/* Dimensions of the game screen */
+			this.stage.height = 400;
+			this.context = this.stage.getContext("2d"); 								/* Get the context of the stage */
+			document.body.insertBefore(this.stage, document.body.childNodes[0]);		/* Insert the canvas before the element in the body */
+			this.interval = setInterval(update, frameRate); 							/* Calls the updateStage as per the frame rate */
+		},
+
+		/* Clears out all elements of the stage */
+		clear : function() {
+			this.context.clearRect(0,0,this.stage.width,this.stage.height);
+		}
+	}
+
+
+	/* Draws the ball at a specified height where 0 is the lowest value (ball touches the floor) and
+	300 is the highest value (ball touching the ceiling)*/
+	function drawBall(height) {
+		height = 350 - height;
+		gameArea.context.beginPath();
+		gameArea.context.arc(200, height, 50, 0, 2 * Math.PI);
+		gameArea.context.fill();
+	}
+
+	/* Updates the game by clearing the stage, drawing the ball, updating the velocity 
+	display and simulating the physics of the ball */
+	function update() {
+		gameArea.clear(); 			/* Clear out the stage */
+		drawBall(ball.height); 		/* Draw the ball */
+		updateDisplay();			/* Update the velocity display */
+		simulate();					/* Call simulate() to update the ball's position in space */
+	}
+
+	/* Updates the velocity display of the ball */
+	function updateDisplay() {
+		document.getElementById("velocity").innerHTML = "Velocity: " + Math.floor(ball.velocity); 
+	}
+
+	/* Simulates the physics of the ball */
+	function simulate() {
+		if (ball.height <= floor) {				/* When the ball touches the floor, bounce off the floor*/
+			ball.velocity = -ball.velocity;
+		} else {								/* Else, change the velocity of the ball by the gravitational acceleration */
+			ball.velocity -= gravity;
+		}
+		ball.height += ball.velocity;			/* Update the height of the ball */	
+	}
+
+
+</script>
+
+</body>
+</html>

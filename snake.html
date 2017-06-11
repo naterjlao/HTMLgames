@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Snake</title>
+	<style>
+		canvas {
+			border:1px solid #d3d3d3;
+			background-color: #f1f1f1;
+
+			/*Below is the code for centering the canvas (stage)*/
+			padding-left: 0;
+			padding-right: 0;
+			margin-left: auto;
+			margin-right: auto;
+			display: block;
+		}
+	</style>
+</head>
+<body onload="start()">
+
+	<center>
+		<h1>Snake</h1>
+		<p>Debugging Info:</p>
+		<p id="coordinates"></p>
+		<p id="test"></p>	<!TODO DELETE ME>
+		<p id="snake"></p>
+	</center>
+
+	<script type="text/javascript">
+
+		const FPS = 540;
+		const UNIT_DIM = 20;		/* Number of pixels of the height and width of a unit */
+		const SNAKE_MARGIN = 1;		/* Margin size of a snake unit */
+		const STAGE_SIZE = 30;		/* Number of units of the height and width of a stage */
+		const INITIAL_POS = STAGE_SIZE*STAGE_SIZE/2 + STAGE_SIZE/2;
+		const DEBUG_MODE = true;
+		const SNAKE_COLOR = "#0000000";
+		const FOOD_COLOR = "#0000000";
+
+		var frame_num = 0;	/* TODO Temp will be deleted */
+
+		var snake = {
+			pos : [INITIAL_POS,0,899],	/* Starting position */
+			length : 1,				/* Length of the snake (including the head) */
+			direction : 0 			/* 0 - North, 1 - East, 2 - South, 3 - West */
+		}
+
+		var gameArea = {
+			stage : document.createElement("canvas"),
+			size : STAGE_SIZE*STAGE_SIZE,					/* The size of the stage (ie. the number of positions on the board)*/
+
+			/* Starts the game by initializing values */
+			start : function() {
+				this.stage.width = STAGE_SIZE * UNIT_DIM;									/* Dimensions of the game screen */
+				this.stage.height = STAGE_SIZE * UNIT_DIM;
+				this.context = this.stage.getContext("2d"); 								/* Get the context of the stage */
+				document.body.insertBefore(this.stage, document.body.childNodes[0]);		/* Insert the canvas before the element in the body */
+				this.interval = setInterval(update, FPS); 									/* Calls the update function per frame */
+			},
+
+			/* Clears out all elements of the stage */
+			clear : function() {
+				this.context.clearRect(0,0,this.stage.width,this.stage.height);
+			}
+		}
+
+
+		/* MAIN FUNCTIONS */
+
+		/* Starts the game */
+		function start() {
+			gameArea.start();
+
+			/*TESTING AREA*/
+			printCoordinates();
+			drawSnake();
+		}
+
+		/* Update function - this is called at every frame of the game */
+		function update() {
+			//gameArea.clear();	/* clear game stage */
+
+			/* TEST */
+			document.getElementById("test").innerHTML = frame_num;
+			frame_num++;
+			printSnake();
+			/* END OF TEST */
+
+
+		}
+
+		function drawSnake() {
+			ctx = gameArea.stage.getContext("2d");		/* get stage context */
+			ctx.fillStyle = SNAKE_COLOR;				/* set drawing color */
+
+			/* For every position of each unit of the snake, draw it */
+			for (var i = 0; i < snake.pos.length; i++) {
+				var x = getXPos(snake.pos[i]) * UNIT_DIM + SNAKE_MARGIN;
+				var y = getYPos(snake.pos[i]) * UNIT_DIM + SNAKE_MARGIN;
+				var size = UNIT_DIM - SNAKE_MARGIN * 2;
+				ctx.fillRect(x,y,size,size);
+			}
+		}
+
+		function getXPos(pos) {
+			return pos % STAGE_SIZE;
+		}
+
+		function getYPos(pos) {
+			return Math.floor(pos / STAGE_SIZE);
+		}
+
+		function getPos(xPos, yPos) {
+			return xPos + yPos * STAGE_SIZE;
+		}
+
+
+		/* Debugging Functions */
+		function printCoordinates() {
+			if (DEBUG_MODE) {
+				document.getElementById("coordinates").innerHTML = "Frame Rate = " + FPS + 
+				"<br>xPos = " + getXPos(snake.pos[0]) + " yPos = " + getYPos(snake.pos[0]);
+			} 
+		}
+
+		function printSnake() {
+			if (DEBUG_MODE) {
+				document.getElementById("snake").innerHTML = "Snake Positions = " + snake.pos.toString();
+			}
+		}
+
+
+
+	</script>
+
+</body>
+</html>
