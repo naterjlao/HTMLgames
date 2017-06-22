@@ -20,41 +20,67 @@
 
 	<center>
 		<h1>Snake</h1>
-		<p>Debugging Info:</p>
-		<p id="coordinates"></p>
-		<p id="test"></p>	<!TODO DELETE ME>
-		<p id="snake"></p>
+		Controls:<br>
+		Up Arrow - North<br>
+		Down Arrow - South<br>
+		Left Arrow - East<br>
+		Right Arrow - West<br><br>
+		Author: Nate Lao
+		<p id = "points"></p>
+		
+		<br>
+		<audio controls autoplay>
+ 			<source src="chiptune.mp3" type="audio/mpeg">
+		Your browser does not support the audio element.
+		</audio>
+		<!https://www.youtube.com/watch?v=_NejWV3fy1w>
+
+		<p id = "debug"></p>
+		<p id = "coordinates"></p>
+		<p id = "test"></p>
+		<p id = "snake"></p>
+		<p id = "food"></p>
+		<p id = "keypress"></p>
 	</center>
 
 	<script type="text/javascript">
 
-		const FPS = 540;
+		const FPS = 120; //540
 		const UNIT_DIM = 20;		/* Number of pixels of the height and width of a unit */
 		const SNAKE_MARGIN = 1;		/* Margin size of a snake unit */
 		const STAGE_SIZE = 30;		/* Number of units of the height and width of a stage */
 		const INITIAL_POS = STAGE_SIZE*STAGE_SIZE/2 + STAGE_SIZE/2;
-		const DEBUG_MODE = true;
-		const SNAKE_COLOR = "#0000000";
-		const FOOD_COLOR = "#0000000";
-
-		var frame_num = 0;	/* TODO Temp will be deleted */
+		const SNAKE_COLOR = "#0000FF";
+		const FOOD_COLOR = "#DC143C";
 
 		var snake = {
-			pos : [INITIAL_POS,0,899],	/* Starting position */
+			pos : [INITIAL_POS],	/* Starting position */
 			length : 1,				/* Length of the snake (including the head) */
-			direction : 0 			/* 0 - North, 1 - East, 2 - South, 3 - West */
+			direction : 0, 			/* 0 - North, 1 - East, 2 - South, 3 - West */
+
+			reset : function() {
+				this.pos = [INITIAL_POS];
+				this.length = 1;
+				this.direction = 0;
+			}
+		}
+
+		var food = {
+			pos : 0,				/* Positions of the food on the game area */
 		}
 
 		var gameArea = {
 			stage : document.createElement("canvas"),
-			size : STAGE_SIZE*STAGE_SIZE,					/* The size of the stage (ie. the number of positions on the board)*/
+			size : STAGE_SIZE*STAGE_SIZE,					/* The size of the stage (ie. the number of positions on the board) */
+			pause : false,
 
 			/* Starts the game by initializing values */
 			start : function() {
-				this.stage.width = STAGE_SIZE * UNIT_DIM;									/* Dimensions of the game screen */
-				this.stage.height = STAGE_SIZE * UNIT_DIM;
+				this.stage.width = STAGE_SIZE * UNIT_DIM;									/* Width of the game screen */
+				this.stage.height = STAGE_SIZE * UNIT_DIM;									/* Height of the game screen */
 				this.context = this.stage.getContext("2d"); 								/* Get the context of the stage */
 				document.body.insertBefore(this.stage, document.body.childNodes[0]);		/* Insert the canvas before the element in the body */
+				window.addEventListener("keypress",keyDown,false);							/* Set keypress handling */
 				this.interval = setInterval(update, FPS); 									/* Calls the update function per frame */
 			},
 
@@ -69,38 +95,132 @@
 
 		/* Starts the game */
 		function start() {
+			generateFood();
 			gameArea.start();
-
-			/*TESTING AREA*/
-			printCoordinates();
-			drawSnake();
 		}
 
 		/* Update function - this is called at every frame of the game */
 		function update() {
-			//gameArea.clear();	/* clear game stage */
-
-			/* TEST */
-			document.getElementById("test").innerHTML = frame_num;
-			frame_num++;
-			printSnake();
-			/* END OF TEST */
-
-
-		}
-
-		function drawSnake() {
-			ctx = gameArea.stage.getContext("2d");		/* get stage context */
-			ctx.fillStyle = SNAKE_COLOR;				/* set drawing color */
-
-			/* For every position of each unit of the snake, draw it */
-			for (var i = 0; i < snake.pos.length; i++) {
-				var x = getXPos(snake.pos[i]) * UNIT_DIM + SNAKE_MARGIN;
-				var y = getYPos(snake.pos[i]) * UNIT_DIM + SNAKE_MARGIN;
-				var size = UNIT_DIM - SNAKE_MARGIN * 2;
-				ctx.fillRect(x,y,size,size);
+			if (!gameArea.pause) {
+				gameArea.clear();	/* clear game stage */
+				draw();				/* Draws all elements on the canvas */
+				printPoints();		/* Prints out points score */
+				printDebug();		/* Print Debuggging Information */
+				checkCollisions();	/* Checks if the snake ate any food or if it collides with itself */
+				updateSnake();		/* Sets the next position of the snake */
 			}
 		}
+
+		/* Handles keyboard presses */
+		function keyDown(event) {
+			key = event.which || event.keyCode; 			//up - 38, right - 39, down - 40, left - 37
+
+			if (!gameArea.pause) {
+				if (key == 38 && snake.direction != 2) { 		/* Up */
+					snake.direction = 0;
+				} else if (key == 39 && snake.direction != 3) {	/* Right */
+					snake.direction = 1;
+				} else if (key == 40 && snake.direction != 0) { /* Down */
+					snake.direction = 2;
+				} else if (key == 37 && snake.direction != 1) { /* Left */
+					snake.direction = 3;
+				} 
+			} 
+
+			if (key == 32) {									/* Spacebar - Pause the game */
+				gameArea.pause = !gameArea.pause;
+			}
+		}
+
+		/* Updates the next positon of the snake at every frame based on the set direction of the snake */
+		function updateSnake() {
+			head = snake.pos[0];
+
+			if (snake.direction == 0) {
+				xPos = getXPos(head);
+				yPos = getYPos(head) - 1;
+			} else if (snake.direction == 1) {
+				xPos = getXPos(head) + 1;
+				yPos = getYPos(head);
+			} else if (snake.direction == 2) {
+				xPos = getXPos(head);
+				yPos = getYPos(head) + 1 ;
+			} else {
+				xPos = getXPos(head) - 1;
+				yPos = getYPos(head);
+			}
+
+			/* Keep within bounds */
+			xPos = (xPos + STAGE_SIZE) % STAGE_SIZE;
+			yPos = (yPos + STAGE_SIZE) % STAGE_SIZE;
+
+			newPos = getPos(xPos,yPos);	/* Get the next position */
+			snake.pos.unshift(newPos);	/* Put the new position to the front of the positions list */
+
+			/* Trims the snake according to its size */
+			while (snake.pos.length > snake.length) {
+				snake.pos.pop();
+			}
+		}
+
+		/* Checks if the snake collides with itself or food */
+		function checkCollisions() {
+			head = snake.pos[0];	/*The head position of the snake */
+
+			/* Eat food event */
+			if (food.pos == head) {
+				snake.length++;
+				generateFood();
+			}
+
+			/* Game over event */
+			if (snake.pos.slice(1).indexOf(head) >= 0) {
+				alert("GAME OVER");
+				snake.reset();
+				food.reset();
+			}
+		}
+
+		/* Generates the food on the game area */
+		function generateFood() {
+			/* Generate a random position of the snake */
+			newPos = Math.floor(Math.random() * (STAGE_SIZE * STAGE_SIZE - 1));
+
+			/* Find a new position if the food occupies the same space as the snake */
+			while (snake.pos.indexOf(newPos) >= 0) {
+				newPos = Math.floor(Math.random() * (STAGE_SIZE * STAGE_SIZE - 1));
+			}
+
+			/* Add the position to the snake */
+			food.pos = newPos;
+		}
+
+		/* Draws all parts of the game area per frame */
+		function draw() {
+			ctx = gameArea.stage.getContext("2d");		/* get stage context */
+			snakeSize = UNIT_DIM - SNAKE_MARGIN * 2;
+			foodSize = UNIT_DIM/2;
+
+			/* Draw the food */
+			ctx.fillStyle = FOOD_COLOR;
+			x = getXPos(food.pos) * UNIT_DIM + UNIT_DIM/4;
+			y = getYPos(food.pos) * UNIT_DIM + UNIT_DIM/4;
+			ctx.fillRect(x,y,foodSize,foodSize);
+
+			/* For every position of each unit of the snake, draw it */
+			ctx.fillStyle = SNAKE_COLOR;
+			for (i = 0; i < snake.pos.length; i++) {
+				x = getXPos(snake.pos[i]) * UNIT_DIM + SNAKE_MARGIN;
+				y = getYPos(snake.pos[i]) * UNIT_DIM + SNAKE_MARGIN;
+				ctx.fillRect(x,y,snakeSize,snakeSize);
+			}
+		}
+
+		function printPoints() {
+			document.getElementById("points").innerHTML = "Points = " + (snake.length - 1);
+		}
+
+		/* Helper functions */
 
 		function getXPos(pos) {
 			return pos % STAGE_SIZE;
@@ -116,20 +236,22 @@
 
 
 		/* Debugging Functions */
-		function printCoordinates() {
+		const DEBUG_MODE = false;
+
+		function printDebug() {
 			if (DEBUG_MODE) {
+				document.getElementById("debug").innerHTML = "Debugging Info:";
+
 				document.getElementById("coordinates").innerHTML = "Frame Rate = " + FPS + 
-				"<br>xPos = " + getXPos(snake.pos[0]) + " yPos = " + getYPos(snake.pos[0]);
+					"<br>xPos = " + getXPos(snake.pos[0]) + " yPos = " + getYPos(snake.pos[0]);
+
+				document.getElementById("snake").innerHTML = "Snake Positions = " + snake.pos.toString() + 
+					"<br>Snake Length = " + snake.length + 
+					"<br>Self Collision = " + (snake.pos.slice(1).indexOf(snake.pos[0]));
+
+				document.getElementById("food").innerHTML = "Food Positions = " + food.pos.toString();
 			} 
 		}
-
-		function printSnake() {
-			if (DEBUG_MODE) {
-				document.getElementById("snake").innerHTML = "Snake Positions = " + snake.pos.toString();
-			}
-		}
-
-
 
 	</script>
 
