@@ -1,0 +1,17 @@
+body {
+	background-color: #edf7a6;
+	text-align: center;
+}
+
+canvas {
+	align-self: center;
+	border:1px solid #d3d3d3;
+	background-color: #ff876e;
+
+	/*Below is the code for centering the canvas (stage)*/
+	padding-left: 0;
+	padding-right: 0;
+	margin-left: auto;
+	margin-right: auto;
+	display: block;
+}
